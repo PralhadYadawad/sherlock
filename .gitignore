@@ -35,3 +35,13 @@ dist/
 build/
 *.log
 /tmp/
+
+# internal process docs — never published
+AGENTS.md
+PLAN-entity.md
+AUDIT2.log
+DESIGN.log
+research-*.md
+research-*.log
+review/
+*VERIFY*.log
