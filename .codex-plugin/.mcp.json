@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "sherlock": {
+      "type": "streamable-http",
+      "url": "https://example.com/mcp"
+    }
+  }
+}

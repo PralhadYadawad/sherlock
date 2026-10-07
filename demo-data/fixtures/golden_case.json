@@ -1,0 +1,433 @@
+{
+  "name": "golden_case",
+  "description": "Kotabagi-shaped golden run (DUMMY/example only): 2 same-name candidates, mixed lanes, 1 PII trap, 1 login-walled claim, 1 invented URL. No network, no real PII.",
+  "query": "R Kotabagi",
+  "base_case_id": "ENTITY-r-kotabagi",
+  "variants_hint": [
+    "r kotabagi",
+    "r kotabaghi"
+  ],
+  "fetched_urls": [
+    "https://example.com/profiles/r-kotabagi",
+    "https://example.com/profiles/r-kotabaghi",
+    "https://example.com/papers/001",
+    "https://example.com/papers/002"
+  ],
+  "findings": [
+    {
+      "type": "scholar_affiliation",
+      "value": "affiliation: Example University (0000-0002-1825-0097)",
+      "source": "scholar",
+      "confidence": "low"
+    },
+    {
+      "type": "scholar_work",
+      "value": "work: Open-source research methods (Example University, ORCID 0000-0002-1825-0097) https://example.com/papers/001",
+      "source": "scholar",
+      "confidence": "low"
+    },
+    {
+      "type": "result_snippet",
+      "value": "R Kotabagi — Research Scholar, affiliation: Example University, Bengaluru, ORCID 0000-0002-1825-0097 https://example.com/profiles/r-kotabagi",
+      "source": "websearch",
+      "confidence": "low"
+    },
+    {
+      "type": "text_snippet",
+      "value": "Bio excerpt: R Kotabagi, affiliation: Example University, ORCID 0000-0002-1825-0097 https://example.com/profiles/r-kotabagi",
+      "source": "page_reader",
+      "confidence": "low"
+    },
+    {
+      "type": "contact",
+      "value": "lab@example.com (published at https://example.com/profiles/r-kotabagi)",
+      "source": "page_reader",
+      "confidence": "low"
+    },
+    {
+      "type": "scholar_affiliation",
+      "value": "affiliation: Another Institute (0000-0002-1825-0098)",
+      "source": "scholar",
+      "confidence": "low"
+    },
+    {
+      "type": "scholar_work",
+      "value": "work: Other methods note (Another Institute, ORCID 0000-0002-1825-0098) https://example.com/papers/002",
+      "source": "scholar",
+      "confidence": "low"
+    },
+    {
+      "type": "result_snippet",
+      "value": "R Kotabaghi — Faculty, affiliation: Another Institute, Mumbai, ORCID 0000-0002-1825-0098 https://example.com/profiles/r-kotabaghi",
+      "source": "websearch",
+      "confidence": "low"
+    },
+    {
+      "type": "text_snippet",
+      "value": "Bio excerpt: R Kotabaghi, affiliation: Another Institute, ORCID 0000-0002-1825-0098 https://example.com/profiles/r-kotabaghi",
+      "source": "page_reader",
+      "confidence": "low"
+    },
+    {
+      "type": "contact",
+      "value": "r.kotabagi@gmail.com",
+      "source": "websearch",
+      "confidence": "high"
+    },
+    {
+      "type": "text_snippet",
+      "value": "Full publication list — login required to view (private profile) https://example.com/profiles/r-kotabagi",
+      "source": "websearch",
+      "confidence": "medium"
+    },
+    {
+      "type": "result_url",
+      "value": "https://example.com/papers/999-unfetched-secret",
+      "source": "websearch",
+      "confidence": "medium"
+    },
+    {
+      "type": "result_snippet",
+      "value": "R Kotabagi rumored award (single anonymous blog, no affiliation, no ORCID)",
+      "source": "websearch",
+      "confidence": "low"
+    },
+    {
+      "type": "result_snippet",
+      "value": "",
+      "source": "websearch",
+      "confidence": "low"
+    }
+  ],
+  "expected": {
+    "evidence_scores": [
+      {
+        "index": 0,
+        "evidence_score": 2
+      },
+      {
+        "index": 1,
+        "evidence_score": 2
+      },
+      {
+        "index": 2,
+        "evidence_score": 2
+      },
+      {
+        "index": 3,
+        "evidence_score": 2
+      },
+      {
+        "index": 4,
+        "evidence_score": 3
+      },
+      {
+        "index": 5,
+        "evidence_score": 2
+      },
+      {
+        "index": 6,
+        "evidence_score": 2
+      },
+      {
+        "index": 7,
+        "evidence_score": 2
+      },
+      {
+        "index": 8,
+        "evidence_score": 2
+      },
+      {
+        "index": 9,
+        "evidence_score": 3
+      },
+      {
+        "index": 10,
+        "evidence_score": 3
+      },
+      {
+        "index": 11,
+        "evidence_score": 2
+      },
+      {
+        "index": 12,
+        "evidence_score": 1
+      },
+      {
+        "index": 13,
+        "evidence_score": 0
+      }
+    ],
+    "kept_count": 9,
+    "kept_values": [
+      "Bio excerpt: R Kotabaghi, affiliation: Another Institute, ORCID 0000-0002-1825-0098 https://example.com/profiles/r-kotabaghi",
+      "Bio excerpt: R Kotabagi, affiliation: Example University, ORCID 0000-0002-1825-0097 https://example.com/profiles/r-kotabagi",
+      "R Kotabaghi — Faculty, affiliation: Another Institute, Mumbai, ORCID 0000-0002-1825-0098 https://example.com/profiles/r-kotabaghi",
+      "R Kotabagi — Research Scholar, affiliation: Example University, Bengaluru, ORCID 0000-0002-1825-0097 https://example.com/profiles/r-kotabagi",
+      "affiliation: Another Institute (0000-0002-1825-0098)",
+      "affiliation: Example University (0000-0002-1825-0097)",
+      "lab@example.com (published at https://example.com/profiles/r-kotabagi)",
+      "work: Open-source research methods (Example University, ORCID 0000-0002-1825-0097) https://example.com/papers/001",
+      "work: Other methods note (Another Institute, ORCID 0000-0002-1825-0098) https://example.com/papers/002"
+    ],
+    "refused": [
+      {
+        "index": 9,
+        "reason": "pii_excluded",
+        "detail": "PII excluded (non-public email/phone; published @example.com contacts only)"
+      },
+      {
+        "index": 10,
+        "reason": "login_walled_claim",
+        "detail": "login-walled/private claim refused (public sources only; no bypass)"
+      },
+      {
+        "index": 11,
+        "reason": "hallucinated_url",
+        "detail": "claimed URL not in fetched set: https://example.com/papers/999-unfetched-secret"
+      },
+      {
+        "index": 12,
+        "reason": "insufficient_evidence",
+        "detail": "evidence_score 1 below threshold 2 (single low-confidence source, no corroboration/provenance)"
+      },
+      {
+        "index": 13,
+        "reason": "unparsable",
+        "detail": "unparsable finding (missing type/value/source/confidence)"
+      }
+    ],
+    "cases": [
+      {
+        "case_id": "ENTITY-r-kotabagi:candidate-1",
+        "finding_count": 5,
+        "lanes": [
+          "page_reader",
+          "scholar",
+          "websearch"
+        ],
+        "by_lane": {
+          "page_reader": [
+            {
+              "type": "contact",
+              "value": "lab@example.com (published at https://example.com/profiles/r-kotabagi)",
+              "source": "page_reader",
+              "confidence": "low",
+              "sources": [
+                "page_reader"
+              ]
+            },
+            {
+              "type": "text_snippet",
+              "value": "Bio excerpt: R Kotabagi, affiliation: Example University, ORCID 0000-0002-1825-0097 https://example.com/profiles/r-kotabagi",
+              "source": "page_reader",
+              "confidence": "low",
+              "sources": [
+                "page_reader"
+              ]
+            }
+          ],
+          "websearch": [
+            {
+              "type": "result_snippet",
+              "value": "R Kotabagi — Research Scholar, affiliation: Example University, Bengaluru, ORCID 0000-0002-1825-0097 https://example.com/profiles/r-kotabagi",
+              "source": "websearch",
+              "confidence": "low",
+              "sources": [
+                "websearch"
+              ]
+            }
+          ],
+          "scholar": [
+            {
+              "type": "scholar_affiliation",
+              "value": "affiliation: Example University (0000-0002-1825-0097)",
+              "source": "scholar",
+              "confidence": "low",
+              "sources": [
+                "scholar"
+              ]
+            },
+            {
+              "type": "scholar_work",
+              "value": "work: Open-source research methods (Example University, ORCID 0000-0002-1825-0097) https://example.com/papers/001",
+              "source": "scholar",
+              "confidence": "low",
+              "sources": [
+                "scholar"
+              ]
+            }
+          ]
+        },
+        "findings": [
+          {
+            "type": "contact",
+            "value": "lab@example.com (published at https://example.com/profiles/r-kotabagi)",
+            "source": "page_reader",
+            "confidence": "low",
+            "sources": [
+              "page_reader"
+            ]
+          },
+          {
+            "type": "result_snippet",
+            "value": "R Kotabagi — Research Scholar, affiliation: Example University, Bengaluru, ORCID 0000-0002-1825-0097 https://example.com/profiles/r-kotabagi",
+            "source": "websearch",
+            "confidence": "low",
+            "sources": [
+              "websearch"
+            ]
+          },
+          {
+            "type": "scholar_affiliation",
+            "value": "affiliation: Example University (0000-0002-1825-0097)",
+            "source": "scholar",
+            "confidence": "low",
+            "sources": [
+              "scholar"
+            ]
+          },
+          {
+            "type": "scholar_work",
+            "value": "work: Open-source research methods (Example University, ORCID 0000-0002-1825-0097) https://example.com/papers/001",
+            "source": "scholar",
+            "confidence": "low",
+            "sources": [
+              "scholar"
+            ]
+          },
+          {
+            "type": "text_snippet",
+            "value": "Bio excerpt: R Kotabagi, affiliation: Example University, ORCID 0000-0002-1825-0097 https://example.com/profiles/r-kotabagi",
+            "source": "page_reader",
+            "confidence": "low",
+            "sources": [
+              "page_reader"
+            ]
+          }
+        ],
+        "cluster_id": "candidate-1",
+        "affiliation": "Example University",
+        "query": "R Kotabagi"
+      },
+      {
+        "case_id": "ENTITY-r-kotabagi:candidate-2",
+        "finding_count": 4,
+        "lanes": [
+          "page_reader",
+          "scholar",
+          "websearch"
+        ],
+        "by_lane": {
+          "websearch": [
+            {
+              "type": "result_snippet",
+              "value": "R Kotabaghi — Faculty, affiliation: Another Institute, Mumbai, ORCID 0000-0002-1825-0098 https://example.com/profiles/r-kotabaghi",
+              "source": "websearch",
+              "confidence": "low",
+              "sources": [
+                "websearch"
+              ]
+            }
+          ],
+          "scholar": [
+            {
+              "type": "scholar_affiliation",
+              "value": "affiliation: Another Institute (0000-0002-1825-0098)",
+              "source": "scholar",
+              "confidence": "low",
+              "sources": [
+                "scholar"
+              ]
+            },
+            {
+              "type": "scholar_work",
+              "value": "work: Other methods note (Another Institute, ORCID 0000-0002-1825-0098) https://example.com/papers/002",
+              "source": "scholar",
+              "confidence": "low",
+              "sources": [
+                "scholar"
+              ]
+            }
+          ],
+          "page_reader": [
+            {
+              "type": "text_snippet",
+              "value": "Bio excerpt: R Kotabaghi, affiliation: Another Institute, ORCID 0000-0002-1825-0098 https://example.com/profiles/r-kotabaghi",
+              "source": "page_reader",
+              "confidence": "low",
+              "sources": [
+                "page_reader"
+              ]
+            }
+          ]
+        },
+        "findings": [
+          {
+            "type": "result_snippet",
+            "value": "R Kotabaghi — Faculty, affiliation: Another Institute, Mumbai, ORCID 0000-0002-1825-0098 https://example.com/profiles/r-kotabaghi",
+            "source": "websearch",
+            "confidence": "low",
+            "sources": [
+              "websearch"
+            ]
+          },
+          {
+            "type": "scholar_affiliation",
+            "value": "affiliation: Another Institute (0000-0002-1825-0098)",
+            "source": "scholar",
+            "confidence": "low",
+            "sources": [
+              "scholar"
+            ]
+          },
+          {
+            "type": "scholar_work",
+            "value": "work: Other methods note (Another Institute, ORCID 0000-0002-1825-0098) https://example.com/papers/002",
+            "source": "scholar",
+            "confidence": "low",
+            "sources": [
+              "scholar"
+            ]
+          },
+          {
+            "type": "text_snippet",
+            "value": "Bio excerpt: R Kotabaghi, affiliation: Another Institute, ORCID 0000-0002-1825-0098 https://example.com/profiles/r-kotabaghi",
+            "source": "page_reader",
+            "confidence": "low",
+            "sources": [
+              "page_reader"
+            ]
+          }
+        ],
+        "cluster_id": "candidate-2",
+        "affiliation": "Another Institute",
+        "query": "R Kotabagi"
+      }
+    ],
+    "case_summary": [
+      {
+        "case_id": "ENTITY-r-kotabagi:candidate-1",
+        "cluster_id": "candidate-1",
+        "affiliation": "Example University",
+        "finding_count": 5,
+        "lanes": [
+          "page_reader",
+          "scholar",
+          "websearch"
+        ]
+      },
+      {
+        "case_id": "ENTITY-r-kotabagi:candidate-2",
+        "cluster_id": "candidate-2",
+        "affiliation": "Another Institute",
+        "finding_count": 4,
+        "lanes": [
+          "page_reader",
+          "scholar",
+          "websearch"
+        ]
+      }
+    ]
+  }
+}

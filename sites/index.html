@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sherlock — Case File Dashboard (offline demo)</title>
+<meta name="description" content="Offline single-file case dashboard. Fixture DEMO-CASE-001 only. No network calls.">
+<style>
+  /* ---- Design system (Linear/Raycast-style dark) ---- */
+  :root{
+    --bg-0:#06080d; --bg-1:#0a0e15;
+    --surface:#0e141e; --surface-2:#131b28; --surface-3:#182234;
+    --border:rgba(148,163,184,.16); --border-soft:rgba(148,163,184,.10);
+    --border-strong:rgba(148,163,184,.30);
+    --text:#e8eef7; --muted:#9aa8bd; --faint:#617189;
+    --accent:#5ac8fa; --accent-ink:#04121b; --violet:#a78bfa;
+    --green:#34d399; --amber:#fbbf24; --rose:#fb7185;
+    --lane-user-1:#0ea5e9; --lane-user-2:#6366f1;
+    --lane-dom-1:#10b981; --lane-dom-2:#14b8a6;
+    --lane-reel-1:#f59e0b; --lane-reel-2:#f43f5e;
+    --r-lg:16px; --r-md:12px; --r-sm:9px;
+    --shadow-1:0 1px 2px rgba(0,0,0,.4);
+    --shadow-2:0 12px 32px -12px rgba(0,0,0,.65);
+    --font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --max:1080px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+  body{
+    margin:0;color:var(--text);font:16px/1.55 var(--font);
+    background:
+      radial-gradient(900px 380px at 12% -80px, rgba(90,200,250,.10), transparent 60%),
+      radial-gradient(800px 360px at 88% -60px, rgba(167,139,250,.10), transparent 60%),
+      linear-gradient(var(--bg-1),var(--bg-0) 420px);
+    background-color:var(--bg-0);
+    min-height:100vh;
+  }
+  a{color:var(--accent)}
+  ::selection{background:rgba(90,200,250,.28)}
+  .skip{position:absolute;left:-9999px;top:0;background:var(--accent);color:#04121b;
+    padding:.6rem 1.1rem;border-radius:0 0 var(--r-sm) 0;z-index:100;font-weight:700}
+  .skip:focus{left:0}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+  .wrap{max-width:var(--max);margin:0 auto;padding:0 1.25rem}
+
+  /* ---- Hero ---- */
+  .hero{padding:2.2rem 0 1.1rem}
+  .brand{display:flex;align-items:center;gap:.7rem;margin-bottom:1rem}
+  .mark{width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;
+    background:linear-gradient(135deg,#0b1524,#101b30);
+    border:1px solid var(--border-strong);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06), var(--shadow-1)}
+  .wordmark{font-weight:800;letter-spacing:-.01em;font-size:1rem}
+  .wordmark small{display:block;font-weight:500;color:var(--muted);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase}
+  .pill{display:inline-flex;align-items:center;gap:.4rem;font-size:.72rem;font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    border:1px solid var(--border);border-radius:999px;padding:.28rem .7rem;background:rgba(14,20,30,.7)}
+  .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+  .hero h1{font-size:clamp(1.7rem,3.4vw,2.4rem);line-height:1.12;letter-spacing:-.025em;margin:.4rem 0 .5rem}
+  .hero h1 .grad{background:linear-gradient(92deg,var(--accent),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{color:var(--muted);max-width:62ch;margin:.2rem 0 1rem;font-size:.98rem}
+  .lede q{color:var(--text)}
+  .meta-row{display:flex;gap:.5rem;flex-wrap:wrap;margin:.4rem 0 0;list-style:none;padding:0}
+  .meta-row li{display:inline-flex;align-items:center;gap:.45rem;font-size:.8rem;color:var(--muted);
+    border:1px solid var(--border-soft);background:rgba(19,27,40,.6);border-radius:999px;padding:.32rem .75rem}
+  .meta-row code{font-family:var(--mono);font-size:.76rem;color:var(--text)}
+  .case-id{font-family:var(--mono);font-size:.76rem;color:var(--accent);font-weight:700}
+
+  /* ---- Sticky toolbar ---- */
+  .toolbar{position:sticky;top:12px;z-index:30;margin-top:1rem;
+    background:rgba(13,19,29,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+    border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-2);
+    padding:.9rem;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:.8rem}
+  .field{display:flex;flex-direction:column;gap:.35rem;min-width:0}
+  .field.wide{grid-column:1/-1}
+  label,.lane-label{font-size:.74rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+  .search-wrap{position:relative}
+  .search-wrap svg{position:absolute;left:.8rem;top:50%;transform:translateY(-50%);opacity:.55;pointer-events:none}
+  input[type="search"],select{
+    background:#080d15;color:var(--text);border:1px solid var(--border);
+    border-radius:var(--r-sm);padding:.68rem .8rem;font-size:1rem;width:100%;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+  input[type="search"]{padding-left:2.5rem;padding-right:2.6rem}
+  input[type="search"]::placeholder{color:var(--faint)}
+  input[type="search"]:hover,select:hover{border-color:var(--border-strong)}
+  .clear{position:absolute;right:.4rem;top:50%;transform:translateY(-50%);
+    min-width:44px;min-height:44px;border:1px solid transparent;background:transparent;color:var(--muted);
+    border-radius:8px;font-size:1rem;cursor:pointer;display:none}
+  .clear:hover{color:var(--text);border-color:var(--border)}
+  .clear.show{display:block}
+  .row-2{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.8rem;align-items:end;grid-column:1/-1}
+  .lanes{display:flex;gap:.5rem;flex-wrap:wrap}
+  .lanes button{
+    min-height:44px;background:rgba(8,13,21,.7);color:var(--text);border:1px solid var(--border);
+    border-radius:999px;padding:.55rem 1rem;font-size:.88rem;font-weight:600;cursor:pointer;
+    display:inline-flex;align-items:center;gap:.45rem;
+    transition:border-color .16s ease,background .16s ease,transform .16s ease,box-shadow .16s ease}
+  .lanes button:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+  .lanes button:active{transform:translateY(0) scale(.98)}
+  .lanes button[aria-pressed="true"]{background:linear-gradient(180deg,#bfe6fd,#5ac8fa);
+    color:var(--accent-ink);border-color:transparent;font-weight:800;box-shadow:0 6px 18px -8px rgba(90,200,250,.7)}
+  .lanes .n{font-family:var(--mono);font-size:.72rem;font-weight:700;opacity:.75;
+    border:1px solid currentColor;border-radius:999px;padding:0 .45rem;line-height:1.5}
+  .lanes button[aria-pressed="true"] .n{opacity:.85}
+  .hint{font-size:.78rem;color:var(--faint);margin:0}
+
+  /* ---- Status + grid ---- */
+  .status{display:flex;align-items:center;gap:.5rem;margin:1rem .1rem .8rem;color:var(--muted);font-size:.88rem;min-height:1.6em}
+  .status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;box-shadow:0 0 10px rgba(90,200,250,.8)}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem}
+  .card{
+    appearance:none;background:linear-gradient(180deg,var(--surface-2),var(--surface));
+    border:1px solid var(--border);border-radius:var(--r-lg);padding:0;text-align:left;color:var(--text);
+    cursor:pointer;width:100%;font-size:1rem;overflow:hidden;display:flex;flex-direction:column;
+    box-shadow:var(--shadow-1);
+    transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+    animation:rise .5s ease both;animation-delay:calc(var(--i,0)*45ms)}
+  .card:hover{transform:translateY(-3px);border-color:rgba(90,200,250,.55);box-shadow:var(--shadow-2)}
+  .card:active{transform:translateY(-1px) scale(.995)}
+  .thumb{position:relative;height:92px;overflow:hidden;flex:none;
+    background-color:#0a1220;border-bottom:1px solid var(--border-soft)}
+  .thumb::after{content:"";position:absolute;inset:0;
+    background-image:radial-gradient(rgba(255,255,255,.16) 1px,transparent 1.4px);background-size:14px 14px;opacity:.5}
+  .thumb-user{background:linear-gradient(120deg,rgba(14,165,233,.55),rgba(99,102,241,.5)),linear-gradient(180deg,#0c1626,#0a1220)}
+  .thumb-domain{background:linear-gradient(120deg,rgba(16,185,129,.5),rgba(20,184,166,.42)),linear-gradient(180deg,#0b1a17,#0a1412)}
+  .thumb-reel{background:linear-gradient(120deg,rgba(245,158,11,.5),rgba(244,63,94,.45)),linear-gradient(180deg,#1c1410,#12100c)}
+  .thumb .glyph{position:absolute;left:.8rem;bottom:.6rem;z-index:1;display:inline-flex;align-items:center;gap:.4rem;
+    font-family:var(--mono);font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    color:rgba(255,255,255,.92);background:rgba(0,0,0,.38);border:1px solid rgba(255,255,255,.22);
+    padding:.22rem .6rem;border-radius:999px;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+  .thumb .conf-dot{position:absolute;right:.8rem;top:.7rem;z-index:1;width:10px;height:10px;border-radius:50%;
+    border:2px solid rgba(0,0,0,.45)}
+  .conf-dot.high{background:var(--green);box-shadow:0 0 10px rgba(52,211,153,.9)}
+  .conf-dot.medium{background:var(--amber);box-shadow:0 0 10px rgba(251,191,36,.9)}
+  .conf-dot.low{background:#94a3b8;box-shadow:0 0 8px rgba(148,163,184,.8)}
+  .card-body{padding:.85rem .95rem 1rem;display:flex;flex-direction:column;gap:.5rem;min-width:0}
+  .eyebrow{font-family:var(--mono);font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  .card-title{display:block;font-size:.95rem;font-weight:700;line-height:1.4;margin:0;word-break:break-word;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .badges{display:flex;gap:.4rem;flex-wrap:wrap;margin:0}
+  .badge{display:inline-flex;align-items:center;gap:.32rem;font-size:.7rem;font-weight:700;border-radius:999px;
+    padding:.2rem .6rem;border:1px solid var(--border);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  .badge i{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+  .badge.lane-username{color:#7dd3fc;border-color:rgba(125,211,252,.4);background:rgba(14,165,233,.10)}
+  .badge.lane-domain{color:#6ee7b7;border-color:rgba(110,231,183,.4);background:rgba(16,185,129,.10)}
+  .badge.lane-reel{color:#fcd34d;border-color:rgba(252,211,77,.4);background:rgba(245,158,11,.10)}
+  .badge.conf-high{color:var(--green);border-color:rgba(52,211,153,.5)}
+  .badge.conf-medium{color:var(--amber);border-color:rgba(251,191,36,.5)}
+  .badge.conf-low{color:var(--muted)}
+  .src{font-family:var(--mono);font-size:.74rem;color:var(--faint);margin:0;word-break:break-word}
+  .open-hint{font-size:.74rem;color:var(--faint);margin:.1rem 0 0}
+  .card:hover .open-hint,.card:focus-visible .open-hint{color:var(--accent)}
+
+  /* ---- Empty / error states ---- */
+  .state{border:1px dashed var(--border-strong);border-radius:var(--r-lg);padding:2.4rem 1.2rem;
+    text-align:center;color:var(--muted);background:rgba(14,20,30,.6);margin-top:.2rem}
+  .state .art{width:46px;height:46px;margin:0 auto .8rem;border-radius:14px;display:grid;place-items:center;
+    background:linear-gradient(135deg,rgba(90,200,250,.16),rgba(167,139,250,.16));border:1px solid var(--border)}
+  .state.error{border-color:rgba(251,113,133,.55);border-style:solid;background:rgba(60,16,26,.25)}
+  .state strong{display:block;color:var(--text);margin-bottom:.35rem;font-size:1.02rem;letter-spacing:-.01em}
+  .state p{margin:.2rem auto;max-width:52ch;font-size:.9rem}
+
+  /* ---- Modal ---- */
+  dialog{border:1px solid var(--border-strong);border-radius:18px;background:linear-gradient(180deg,#121a28,#0c121d);
+    color:var(--text);max-width:min(580px,92vw);width:580px;padding:0;box-shadow:var(--shadow-2)}
+  dialog::backdrop{background:rgba(3,5,9,.66);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+  dialog[open]{animation:pop .22s ease both}
+  .modal-stripe{height:5px;border-radius:18px 18px 0 0;
+    background:linear-gradient(90deg,var(--lane-user-1),var(--lane-user-2),var(--lane-dom-1),var(--lane-reel-2))}
+  .modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.75rem;padding:1.1rem 1.1rem .4rem}
+  .modal-head h2{margin:0;font-size:1.08rem;line-height:1.4;letter-spacing:-.01em;word-break:break-word}
+  .x{min-width:44px;min-height:44px;border-radius:10px;border:1px solid var(--border);background:rgba(8,13,21,.6);
+    color:var(--text);font-size:1rem;cursor:pointer;flex:none}
+  .x:hover{border-color:var(--border-strong);color:var(--accent)}
+  .modal-body{padding:.4rem 1.1rem .4rem}
+  .kv{display:grid;grid-template-columns:128px 1fr;gap:.4rem .8rem;font-size:.9rem;margin:.7rem 0}
+  .kv dt{color:var(--faint);font-size:.76rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;padding-top:.15rem}
+  .kv dd{margin:0;word-break:break-word}
+  .kv dd.mono{font-family:var(--mono);font-size:.82rem}
+  .modal-foot{padding:.6rem 1.1rem 1.1rem;display:flex;justify-content:flex-end;gap:.5rem}
+  .btn{background:linear-gradient(180deg,#bfe6fd,#5ac8fa);color:var(--accent-ink);border:0;border-radius:10px;
+    padding:.68rem 1.2rem;min-height:44px;font-size:.95rem;font-weight:800;cursor:pointer}
+  .btn:hover{filter:brightness(1.06)}
+  .btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border);font-weight:600}
+
+  footer{padding:1.4rem 0 2.6rem;color:var(--faint);font-size:.78rem}
+  footer .rule{border:0;border-top:1px solid var(--border-soft);margin:0 0 1rem}
+
+  /* ---- Phase 4 doors: entity search + page reader (offline-first) ---- */
+  .panel{margin-top:1rem;border:1px solid var(--border);border-radius:var(--r-lg);
+    background:rgba(14,20,30,.6);padding:1rem}
+  .panel h2{margin:.1rem 0 .4rem;font-size:1.05rem;letter-spacing:-.01em}
+  .panel .hint{margin:.2rem 0 .8rem}
+  .panel code{font-family:var(--mono);font-size:.78rem;color:var(--text)}
+  .door-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.6rem;align-items:end}
+  .door-row input[type="text"],.door-row input[type="url"],.door-row input:not([type]){
+    background:#080d15;color:var(--text);border:1px solid var(--border);
+    border-radius:var(--r-sm);padding:.68rem .8rem;font-size:1rem;width:100%}
+  .door-actions{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+  .go{min-height:44px;border-radius:10px;border:1px solid var(--border);
+    background:rgba(8,13,21,.7);color:var(--text);font-weight:700;
+    padding:.6rem 1rem;font-size:.92rem;cursor:pointer}
+  .go.primary{background:linear-gradient(180deg,#bfe6fd,#5ac8fa);color:var(--accent-ink);border:0;font-weight:800}
+  .go:hover{border-color:var(--border-strong)}
+  .go.primary:hover{filter:brightness(1.06)}
+  .go[disabled]{opacity:.55;cursor:not-allowed}
+  .live-badge{display:inline-flex;align-items:center;gap:.35rem;font-size:.7rem;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--amber);vertical-align:middle;
+    border:1px solid rgba(251,191,36,.45);border-radius:999px;padding:.2rem .6rem}
+  .variant-line{font-family:var(--mono);font-size:.76rem;color:var(--muted);word-break:break-word;margin:.5rem 0 0}
+  .cluster-list{list-style:none;padding:0;margin:.6rem 0 0;display:flex;flex-direction:column;gap:.6rem}
+  .cluster{border:1px solid var(--border);border-radius:var(--r-md);padding:.7rem .8rem;background:rgba(8,13,21,.5)}
+  .cluster h3{margin:0 0 .3rem;font-size:.95rem;word-break:break-word}
+  .cluster dl{margin:.4rem 0 0;display:grid;grid-template-columns:130px 1fr;gap:.3rem .7rem;font-size:.86rem}
+  .cluster dt{color:var(--faint);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+  .cluster dd{margin:0;word-break:break-word}
+  .cluster dd.mono{font-family:var(--mono);font-size:.8rem}
+  .thumb-page_reader{background:linear-gradient(120deg,rgba(90,200,250,.45),rgba(167,139,250,.4)),linear-gradient(180deg,#0c1626,#0a1220)}
+  .demo-tag{display:inline-flex;align-items:center;gap:.35rem;font-size:.68rem;font-weight:800;
+    letter-spacing:.07em;text-transform:uppercase;color:var(--violet);
+    border:1px solid rgba(167,139,250,.5);border-radius:999px;padding:.18rem .6rem;vertical-align:middle}
+  .lane-status{list-style:none;padding:0;margin:.6rem 0 0;display:flex;flex-direction:column;gap:.35rem}
+  .lane-status li{font-family:var(--mono);font-size:.76rem;color:var(--muted);
+    border:1px solid var(--border-soft);border-radius:var(--r-sm);
+    padding:.4rem .65rem;background:rgba(8,13,21,.5);word-break:break-word}
+  .lane-status .ok{color:var(--green)}
+  .lane-status .skip-lane{color:var(--faint)}
+  .depth-set{border:1px solid var(--border);border-radius:var(--r-md);
+    padding:.65rem .8rem;margin:.7rem 0 0;display:flex;gap:1rem;flex-wrap:wrap;align-items:center}
+  .depth-set legend{font-size:.74rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);padding:0 .4rem}
+  .depth-set label{display:inline-flex;align-items:center;gap:.45rem;font-size:.88rem;
+    min-height:44px;cursor:pointer}
+  .depth-set input{width:1.1rem;height:1.1rem;accent-color:var(--accent)}
+  .depth-note{font-size:.78rem;color:var(--faint);margin:.4rem 0 0}
+  .finding-row{border-top:1px solid var(--border-soft);padding:.5rem 0 0;margin:.5rem 0 0}
+  .finding-row .fval{font-size:.84rem;word-break:break-word}
+  .finding-row .fval code{font-family:var(--mono);font-size:.76rem}
+  .fetch-one{min-height:44px;border-radius:10px;border:1px solid var(--border);
+    background:rgba(8,13,21,.7);color:var(--text);font-weight:700;
+    padding:.55rem .9rem;font-size:.85rem;cursor:pointer;margin-top:.45rem}
+  .fetch-one:hover{border-color:var(--border-strong)}
+  .fetch-one[disabled]{opacity:.55;cursor:not-allowed}
+  .inline-findings{margin:.5rem 0 0}
+  .inline-findings ul{list-style:none;padding:0;margin:.4rem 0 0;display:flex;flex-direction:column;gap:.3rem}
+  .inline-findings li{font-size:.82rem;border:1px solid var(--border-soft);border-radius:var(--r-sm);
+    padding:.4rem .6rem;background:rgba(8,13,21,.5);word-break:break-word}
+  .inline-findings .mini-state{font-size:.82rem;color:var(--muted);margin:.3rem 0 0}
+
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+
+  @media (max-width:640px){
+    .hero{padding:1.4rem 0 .8rem}
+    .toolbar{grid-template-columns:1fr;top:8px;padding:.8rem}
+    .row-2{grid-template-columns:1fr}
+    .grid{grid-template-columns:1fr}
+    .thumb{height:84px}
+    .kv{grid-template-columns:1fr;gap:.1rem}
+    .kv dt{padding-top:.5rem}
+    .door-row{grid-template-columns:1fr}
+    .cluster dl{grid-template-columns:1fr;gap:.1rem}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{transition:none !important;animation:none !important;scroll-behavior:auto !important}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#results">Skip to findings</a>
+<div class="wrap">
+<header class="hero">
+  <div class="brand">
+    <span class="mark" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <circle cx="8.5" cy="8.5" r="5.2" stroke="#5ac8fa" stroke-width="2"/>
+        <line x1="12.6" y1="12.6" x2="17" y2="17" stroke="#a78bfa" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+    </span>
+    <span class="wordmark">Sherlock<small>OSINT case files</small></span>
+    <span class="pill" style="margin-left:auto"><span class="dot" aria-hidden="true"></span>Offline-first · zero network until you fetch</span>
+  </div>
+  <h1>Case file <span class="grad">dashboard</span></h1>
+  <p class="lede">Offline demo · single file · fixture <strong>DEMO-CASE-001</strong> only.
+  Query <q>osint demo case</q> returns DEMO-CASE-001 top-1 (documented fixture rank).
+  Public sources only — no login, no PII, no network.</p>
+  <ul class="meta-row" aria-label="Case summary">
+    <li>Case <code class="case-id">DEMO-CASE-001</code></li>
+    <li><code>@demo.sleuth</code> · 3 presence</li>
+    <li><code>example.com</code> · 2 subdomains + 1 contact</li>
+    <li>Reel <code>DMYosint001</code> · 4 records</li>
+  </ul>
+</header>
+<main>
+  <div class="toolbar" role="group" aria-label="Case controls">
+    <div class="field wide">
+      <label for="search">Search findings in case</label>
+      <div class="search-wrap">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <circle cx="7" cy="7" r="4.6" stroke="#9aa8bd" stroke-width="1.6"/>
+          <line x1="10.6" y1="10.6" x2="14" y2="14" stroke="#9aa8bd" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <input type="search" id="search" autocomplete="off"
+          placeholder="e.g. demo.sleuth, example.com, DMYosint001" aria-describedby="searchHint">
+        <button type="button" class="clear" id="clearBtn" aria-label="Clear search">✕</button>
+      </div>
+    </div>
+    <div class="row-2">
+      <div class="field">
+        <label for="caseSelect">Case</label>
+        <select id="caseSelect">
+          <option value="DEMO-CASE-001" selected>DEMO-CASE-001 — demo.sleuth / example.com / reel</option>
+          <option value="EMPTY-CASE-000">EMPTY-CASE-000 — empty demo (no findings)</option>
+          <option value="ERROR-CASE-XXX">ERROR-CASE-XXX — simulated failure demo</option>
+        </select>
+      </div>
+      <div class="field">
+        <span id="laneLabel" class="lane-label">Lane</span>
+        <div class="lanes" role="group" aria-labelledby="laneLabel">
+          <button type="button" data-lane="all" aria-pressed="true">All <span class="n" data-count="all">10</span></button>
+          <button type="button" data-lane="username" aria-pressed="false">Username <span class="n" data-count="username">3</span></button>
+          <button type="button" data-lane="domain" aria-pressed="false">Domain <span class="n" data-count="domain">3</span></button>
+          <button type="button" data-lane="reel" aria-pressed="false">Reel <span class="n" data-count="reel">4</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="hint" id="searchHint">Search matches type, value, source, and lane. Lane pills filter by lane. Results update as you type.</p>
+
+  <p class="status" id="status" role="status" aria-live="polite"></p>
+  <div class="grid" id="results" tabindex="-1" aria-label="Finding cards"></div>
+  <div id="stateSlot"></div>
+
+  <section class="panel" aria-labelledby="entityH">
+    <h2 id="entityH">Entity search <span class="live-badge">Offline demo · live needs local connector</span></h2>
+    <p class="hint" id="entityHint">Offline fixture search — no network. Try <code>osint demo case</code> (DEMO-CASE-001 top-1), <code>R Kotabagi</code> (homonym demo: 2 kept-separate clusters), or <code>dravya demo</code> (Dravya-shaped demo: 6 kept-separate clusters). Shows query + variants tried + lane status + clusters with confidence (static <code>entity_search</code> shape — demo data, no backend call). Per-finding Fetch buttons reuse the visitor-browser reader (your IP, click only).</p>
+    <div class="door-row">
+      <div class="field">
+        <label for="entityQ">Entity query</label>
+        <input id="entityQ" name="entityQ" type="text" autocomplete="off" placeholder="e.g. osint demo case, R Kotabagi, dravya demo" aria-describedby="entityHint">
+      </div>
+      <div class="door-actions">
+        <button type="button" class="go primary" id="entityGo">Search fixtures</button>
+        <button type="button" class="go" id="entityLiveBtn" disabled aria-disabled="true" title="Live mode needs the localhost connector (docs/LOCAL.md). This static page does not fetch.">Live mode — needs local connector</button>
+      </div>
+    </div>
+    <fieldset class="depth-set">
+      <legend>Depth — static demo, no backend call</legend>
+      <label><input type="radio" name="entityDepth" value="fast" checked> Fast — seconds <span class="hint">(30 sites, live fast lane)</span></label>
+      <label><input type="radio" name="entityDepth" value="deep"> Deep — minutes <span class="hint">(~400 sites, live deep lane)</span></label>
+    </fieldset>
+    <p class="depth-note" id="depthNote">Depth Fast (static demo — labels only, no backend call): live fast lane answers in seconds; fixtures below return instantly with zero network.</p>
+    <p class="status" id="entityStatus" role="status" aria-live="polite"></p>
+    <div id="entityVariants" aria-live="polite"></div>
+    <div id="entityResults"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="readerH">
+    <h2 id="readerH">Page reader <span class="live-badge">Visitor-browser fetch · your IP</span></h2>
+    <p class="hint" id="readerHint">Paste a public page URL. Fetch runs from <strong>your browser</strong> (your IP egress) only when you press Fetch — zero network until then, offline fixtures keep working. Results render as findings below; failures show an error state, never fake data. Public pages only — no login, no PII lookup.</p>
+    <div class="door-row">
+      <div class="field">
+        <label for="readerUrl">Public page URL</label>
+        <input id="readerUrl" name="readerUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://example.com/profiles/r-kotabagi" aria-describedby="readerHint">
+      </div>
+      <div class="door-actions">
+        <button type="button" class="go primary" id="readerGo">Fetch + extract</button>
+      </div>
+    </div>
+    <p class="status" id="readerStatus" role="status" aria-live="polite"></p>
+    <div class="grid" id="readerResults" aria-label="Reader findings"></div>
+    <div id="readerState"></div>
+  </section>
+</main>
+
+<dialog id="detail" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+  <div class="modal-stripe" aria-hidden="true"></div>
+  <div class="modal-head">
+    <h2 id="detailTitle">Finding detail</h2>
+    <button type="button" class="x" id="closeBtn" aria-label="Close detail dialog">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="badges" id="detailBadges"></div>
+    <dl class="kv" id="detailKv"></dl>
+  </div>
+  <div class="modal-foot">
+    <button type="button" class="btn btn-secondary" id="okBtn">Done</button>
+  </div>
+</dialog>
+
+<footer>
+  <hr class="rule">
+  <p>Fixtures per AGENTS.md §3: @demo.sleuth (3 presence hits) · example.com (2 subdomains + 1 contact) ·
+  reel https://www.instagram.com/reel/DMYosint001/ by @demo.archivist (caption has “open-source research”, stub transcript with 2 links).
+  No login, no PII, no network. TODO: rename before public launch (sherlock-project owns “sherlock”).</p>
+</footer>
+</div>
+
+<script src="./reader.js"></script>
+<script>
+'use strict';
+/* Offline fixture DB — mirrors AGENTS.md §3 + panel.json exampleResult
+   + the live adapter offline output (presence/subdomain/contact/author/
+   caption/transcript_link with demo confidences). No fetch. */
+var DB = {
+  'DEMO-CASE-001': {
+    caseId: 'DEMO-CASE-001',
+    rankNote: 'top-1 for query osint demo case (documented fixture rank)',
+    findings: [
+      {id:"u1", lane:"username", type:"presence", value:"DemoHub: https://example.com/users/demo.sleuth", source:"username_probe", confidence:"medium"},
+      {id:"u2", lane:"username", type:"presence", value:"DemoCode: https://example.com/@demo.sleuth", source:"username_probe", confidence:"medium"},
+      {id:"u3", lane:"username", type:"presence", value:"DemoBlog: https://example.com/blog/demo.sleuth", source:"username_probe", confidence:"medium"},
+      {id:"d1", lane:"domain", type:"subdomain", value:"blog.example.com", source:"domain_intel", confidence:"medium"},
+      {id:"d2", lane:"domain", type:"subdomain", value:"www.example.com", source:"domain_intel", confidence:"medium"},
+      {id:"d3", lane:"domain", type:"contact", value:"admin@example.com", source:"domain_intel", confidence:"low"},
+      {id:"r1", lane:"reel", type:"author", value:"@demo.archivist", source:"oembed_public", confidence:"medium", extra:{url:"https://www.instagram.com/reel/DMYosint001/", owner:"@demo.archivist"}},
+      {id:"r2", lane:"reel", type:"caption", value:"open-source research notes: tracing public handles across demo sites for DEMO-CASE-001. Methods only, no private data.", source:"oembed_public", confidence:"medium", extra:{url:"https://www.instagram.com/reel/DMYosint001/", owner:"@demo.archivist", caption:"open-source research notes: tracing public handles across demo sites for DEMO-CASE-001. Methods only, no private data."}},
+      {id:"r3", lane:"reel", type:"transcript_link", value:"https://example.com/resource-1", source:"oembed_public", confidence:"low"},
+      {id:"r4", lane:"reel", type:"transcript_link", value:"https://example.com/resource-2", source:"oembed_public", confidence:"low"}
+    ]
+  },
+  'EMPTY-CASE-000': { caseId: 'EMPTY-CASE-000', findings: [] },
+  'ERROR-CASE-XXX': { caseId: 'ERROR-CASE-XXX', error: 'simulated adapter failure: rate-limit (fixture). No findings invented.' }
+};
+
+var caseSelect = document.getElementById('caseSelect');
+var searchBox = document.getElementById('search');
+var clearBtn = document.getElementById('clearBtn');
+var results = document.getElementById('results');
+var stateSlot = document.getElementById('stateSlot');
+var statusEl = document.getElementById('status');
+var laneButtons = Array.prototype.slice.call(document.querySelectorAll('.lanes button'));
+var activeLane = 'all';
+var lastInvoker = null;
+
+var dialog = document.getElementById('detail');
+var detailTitle = document.getElementById('detailTitle');
+var detailBadges = document.getElementById('detailBadges');
+var detailKv = document.getElementById('detailKv');
+document.getElementById('closeBtn').addEventListener('click', closeModal);
+document.getElementById('okBtn').addEventListener('click', closeModal);
+dialog.addEventListener('click', function (e) {
+  var r = dialog.getBoundingClientRect();
+  if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeModal();
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && dialog.open) closeModal();
+});
+
+function closeModal() {
+  if (dialog.open) dialog.close();
+  if (lastInvoker && lastInvoker.focus) lastInvoker.focus();
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+var LANE_META = {
+  username: {label: 'Username probe', short: 'USER'},
+  domain: {label: 'Domain intel', short: 'DNS'},
+  reel: {label: 'Reel memory', short: 'REEL'},
+  page_reader: {label: 'Page reader', short: 'READ'}
+};
+
+laneButtons.forEach(function (b) {
+  b.addEventListener('click', function () {
+    activeLane = b.getAttribute('data-lane');
+    laneButtons.forEach(function (x) {
+      x.setAttribute('aria-pressed', x === b ? 'true' : 'false');
+    });
+    render();
+  });
+});
+caseSelect.addEventListener('change', render);
+var t = null;
+searchBox.addEventListener('input', function () {
+  clearBtn.classList.toggle('show', searchBox.value.length > 0);
+  if (t) clearTimeout(t);
+  t = setTimeout(render, 150);
+});
+clearBtn.addEventListener('click', function () {
+  searchBox.value = '';
+  clearBtn.classList.remove('show');
+  searchBox.focus();
+  render();
+});
+
+function badgeHtml(f) {
+  return '<span class="badges"><span class="badge lane-' + esc(f.lane) + '"><i aria-hidden="true"></i>' + esc(f.lane) +
+    '</span><span class="badge conf-' + esc(f.confidence) + '"><i aria-hidden="true"></i>' + esc(f.confidence) + '</span></span>';
+}
+
+function openDetail(f, invoker) {
+  lastInvoker = invoker || null;
+  detailTitle.textContent = f.type + ': ' + f.value;
+  detailBadges.innerHTML =
+    '<span class="badge lane-' + esc(f.lane) + '"><i aria-hidden="true"></i>' + esc(f.lane) + '</span>' +
+    '<span class="badge conf-' + esc(f.confidence) + '"><i aria-hidden="true"></i>' + esc(f.confidence) + ' confidence</span>';
+  var rows = [
+    ['Type', f.type, 0], ['Value', f.value, 0], ['Lane', f.lane, 0],
+    ['Source', f.source, 1], ['Confidence', f.confidence, 0], ['Case', caseSelect.value, 1]
+  ];
+  if (f.extra && f.extra.url) rows.push(['URL', f.extra.url, 1]);
+  if (f.extra && f.extra.owner) rows.push(['Owner', f.extra.owner, 0]);
+  if (f.extra && f.extra.caption) rows.push(['Caption', f.extra.caption, 0]);
+  detailKv.innerHTML = rows.map(function (r) {
+    return '<dt>' + esc(r[0]) + '</dt><dd' + (r[2] ? ' class="mono"' : '') + '>' + esc(r[1]) + '</dd>';
+  }).join('');
+  if (dialog.showModal) dialog.showModal();
+  document.getElementById('closeBtn').focus();
+}
+
+function openReaderDetail(f, invoker, pageUrl) {
+  lastInvoker = invoker || null;
+  detailTitle.textContent = f.type + ': ' + f.value;
+  var laneCls = (f.lane === 'username' || f.lane === 'domain' || f.lane === 'reel') ? f.lane : 'reel';
+  detailBadges.innerHTML =
+    '<span class="badge lane-' + esc(laneCls) + '"><i aria-hidden="true"></i>page_reader</span>' +
+    '<span class="badge conf-' + esc(f.confidence) + '"><i aria-hidden="true"></i>' + esc(f.confidence) + ' confidence</span>';
+  var rows = [
+    ['Type', f.type, 0], ['Value', f.value, 0], ['Lane', 'page_reader', 0],
+    ['Source', f.source, 1], ['Confidence', f.confidence, 0], ['Page', pageUrl || '', 1],
+    ['Stored', 'no — visitor fetch, not stored', 0]
+  ];
+  detailKv.innerHTML = rows.map(function (r) {
+    return '<dt>' + esc(r[0]) + '</dt><dd' + (r[2] ? ' class="mono"' : '') + '>' + esc(r[1]) + '</dd>';
+  }).join('');
+  if (dialog.showModal) dialog.showModal();
+  document.getElementById('closeBtn').focus();
+}
+
+function render() {
+  var caseId = caseSelect.value;
+  var q = searchBox.value.trim().toLowerCase();
+  var entry = DB[caseId];
+  results.innerHTML = '';
+  stateSlot.innerHTML = '';
+
+  if (!entry) {
+    statusEl.textContent = 'Unknown case.';
+    stateSlot.innerHTML = '<div class="state error" role="alert"><div class="art" aria-hidden="true">!</div><strong>Error</strong><p>Unknown case selected.</p></div>';
+    return;
+  }
+  if (entry.error) {
+    statusEl.textContent = caseId + ': error state.';
+    stateSlot.innerHTML = '<div class="state error" role="alert"><div class="art" aria-hidden="true">!</div><strong>Could not load findings</strong><p>'
+      + esc(entry.error) + ' Findings: 0 (nothing invented).</p></div>';
+    return;
+  }
+  var list = entry.findings.filter(function (f) {
+    if (activeLane !== 'all' && f.lane !== activeLane) return false;
+    if (!q) return true;
+    return (f.type + ' ' + f.value + ' ' + f.source + ' ' + f.lane).toLowerCase().indexOf(q) !== -1;
+  });
+  /* Documented demo ordering: high confidence first, then lane, then value.
+     DEMO-CASE-001 itself is top-1 for osint demo case by fixture rank. */
+  var rank = {high: 0, medium: 1, low: 2};
+  list.sort(function (a, b) {
+    return (rank[a.confidence] - rank[b.confidence]) ||
+      (a.lane < b.lane ? -1 : a.lane > b.lane ? 1 : 0) ||
+      (a.value < b.value ? -1 : a.value > b.value ? 1 : 0);
+  });
+
+  if (entry.findings.length === 0) {
+    statusEl.textContent = caseId + ': 0 findings.';
+    stateSlot.innerHTML = '<div class="state"><div class="art" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="6" stroke="#5ac8fa" stroke-width="1.8"/><line x1="14.5" y1="14.5" x2="19" y2="19" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round"/></svg></div><strong>Empty case</strong><p>No findings stored for this case yet. Run a lane probe to add some.</p></div>';
+    return;
+  }
+  if (list.length === 0) {
+    statusEl.textContent = '0 of ' + entry.findings.length + ' findings match.';
+    stateSlot.innerHTML = '<div class="state"><div class="art" aria-hidden="true">∅</div><strong>No matches</strong><p>No findings match \u201C' + esc(searchBox.value.trim()) + '\u201D in this lane. Try clearing search or lane.</p></div>';
+    return;
+  }
+  statusEl.textContent = 'Showing ' + list.length + ' of ' + entry.findings.length + ' findings (' + caseId + ').';
+  list.forEach(function (f, i) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'card';
+    b.style.setProperty('--i', String(i));
+    b.setAttribute('aria-label', f.type + ', ' + f.value + ', lane ' + f.lane + ', ' + f.confidence + ' confidence, source ' + f.source + '. Activate for detail.');
+    var meta = LANE_META[f.lane] || {label: f.lane, short: f.lane};
+    b.innerHTML = '<span class="thumb thumb-' + esc(f.lane) + '" aria-hidden="true">'
+      + '<span class="glyph">' + esc(meta.short) + ' · ' + esc(meta.label) + '</span>'
+      + '<span class="conf-dot ' + esc(f.confidence) + '"></span></span>'
+      + '<span class="card-body"><span class="eyebrow">' + esc(f.source) + ' · ' + esc(f.type) + '</span>'
+      + '<span class="card-title">' + esc(f.type) + ': ' + esc(f.value) + '</span>'
+      + badgeHtml(f)
+      + '<span class="src">source: ' + esc(f.source) + '</span>'
+      + '<span class="open-hint">Open detail →</span></span>';
+    b.addEventListener('click', function () { openDetail(f, b); });
+    results.appendChild(b);
+  });
+}
+clearBtn.classList.toggle('show', searchBox.value.length > 0);
+render();
+
+/* ---- Phase 4 doors: entity search (offline fixtures, no network) ---- */
+var entityQ = document.getElementById('entityQ');
+var entityGo = document.getElementById('entityGo');
+var entityStatus = document.getElementById('entityStatus');
+var entityVariantsBox = document.getElementById('entityVariants');
+var entityResults = document.getElementById('entityResults');
+
+/* Static entity_search-shaped demo payloads (fictional, DUMMY/example only).
+ * Clearly labeled demo data in the UI. No backend call, zero network.
+ * Kotabagi-shaped mirrors demo-data/fixtures/golden_case.json expected
+ * cases (2 kept-separate clusters, ORCID pins 0097/0098). Dravya-shaped
+ * mirrors the PLAN-entity journey §4 live run shape (6 ORCID pins → 6
+ * kept-separate clusters) with fictional affiliations + example.com URLs
+ * only — no real-person data. Confidence stays low (metadata only —
+ * high requires human verification, docs/ENTITY.md §4). */
+var KOTABAGI_STATIC = [
+  {clusterId: 'candidate-1', caseId: 'ENTITY-r-kotabagi:candidate-1',
+   affiliation: 'Example University', pin: 'ORCID 0000-0002-1825-0097',
+   findingCount: 5, lanes: ['page_reader', 'scholar', 'websearch'],
+   confidence: 'low', reason: 'metadata only — high requires human verification',
+   names: ['R Kotabagi'],
+   findings: [
+     {type: 'scholar_affiliation', value: 'affiliation: Example University (0000-0002-1825-0097)', source: 'scholar', confidence: 'low'},
+     {type: 'scholar_work', value: 'work: Open-source research methods (Example University, ORCID 0000-0002-1825-0097) https://example.com/papers/001', source: 'scholar', confidence: 'low'},
+     {type: 'result_snippet', value: 'R Kotabagi — Research Scholar, affiliation: Example University, Bengaluru, ORCID 0000-0002-1825-0097 https://example.com/profiles/r-kotabagi', source: 'websearch', confidence: 'low'},
+     {type: 'contact', value: 'lab@example.com (published at https://example.com/profiles/r-kotabagi)', source: 'page_reader', confidence: 'low'},
+     {type: 'text_snippet', value: 'Bio excerpt: R Kotabagi, affiliation: Example University, ORCID 0000-0002-1825-0097 https://example.com/profiles/r-kotabagi', source: 'page_reader', confidence: 'low'}
+   ]},
+  {clusterId: 'candidate-2', caseId: 'ENTITY-r-kotabagi:candidate-2',
+   affiliation: 'Another Institute', pin: 'ORCID 0000-0002-1825-0098',
+   findingCount: 4, lanes: ['page_reader', 'scholar', 'websearch'],
+   confidence: 'low', reason: 'metadata only — high requires human verification',
+   names: ['R Kotabaghi'],
+   findings: [
+     {type: 'scholar_affiliation', value: 'affiliation: Another Institute (0000-0002-1825-0098)', source: 'scholar', confidence: 'low'},
+     {type: 'scholar_work', value: 'work: Other methods note (Another Institute, ORCID 0000-0002-1825-0098) https://example.com/papers/002', source: 'scholar', confidence: 'low'},
+     {type: 'result_snippet', value: 'R Kotabaghi — Faculty, affiliation: Another Institute, Mumbai, ORCID 0000-0002-1825-0098 https://example.com/profiles/r-kotabaghi', source: 'websearch', confidence: 'low'},
+     {type: 'text_snippet', value: 'Bio excerpt: R Kotabaghi, affiliation: Another Institute, ORCID 0000-0002-1825-0098 https://example.com/profiles/r-kotabaghi', source: 'page_reader', confidence: 'low'}
+   ]}
+];
+
+/* Dravya-shaped: 6 ORCID pins → 6 kept-separate clusters (fictional demo). */
+var DRAVYA_STATIC = [
+  {clusterId: 'candidate-1', caseId: 'ENTITY-dravya-demo:candidate-1',
+   affiliation: 'Example University', pin: 'ORCID 0000-0002-1825-0101',
+   findingCount: 3, lanes: ['scholar', 'websearch', 'page_reader'],
+   confidence: 'low', reason: 'metadata only — high requires human verification',
+   names: ['Dravya Demo'],
+   findings: [
+     {type: 'scholar_affiliation', value: 'affiliation: Example University (0000-0002-1825-0101)', source: 'scholar', confidence: 'low'},
+     {type: 'result_snippet', value: 'Dravya Demo — Research Scholar, affiliation: Example University, ORCID 0000-0002-1825-0101 https://example.com/profiles/dravya-1', source: 'websearch', confidence: 'low'},
+     {type: 'text_snippet', value: 'Bio excerpt: Dravya Demo, affiliation: Example University, ORCID 0000-0002-1825-0101 https://example.com/profiles/dravya-1', source: 'page_reader', confidence: 'low'}
+   ]},
+  {clusterId: 'candidate-2', caseId: 'ENTITY-dravya-demo:candidate-2',
+   affiliation: 'Another Institute', pin: 'ORCID 0000-0002-1825-0102',
+   findingCount: 2, lanes: ['scholar', 'websearch'],
+   confidence: 'low', reason: 'metadata only — high requires human verification',
+   names: ['Dravya Demo'],
+   findings: [
+     {type: 'scholar_affiliation', value: 'affiliation: Another Institute (0000-0002-1825-0102)', source: 'scholar', confidence: 'low'},
+     {type: 'result_snippet', value: 'Dravya Demo — Faculty, affiliation: Another Institute, ORCID 0000-0002-1825-0102 https://example.com/profiles/dravya-2', source: 'websearch', confidence: 'low'}
+   ]},
+  {clusterId: 'candidate-3', caseId: 'ENTITY-dravya-demo:candidate-3',
+   affiliation: 'Demo College', pin: 'ORCID 0000-0002-1825-0103',
+   findingCount: 2, lanes: ['scholar', 'websearch'],
+   confidence: 'low', reason: 'metadata only — high requires human verification',
+   names: ['Dravya Demo'],
+   findings: [
+     {type: 'scholar_affiliation', value: 'affiliation: Demo College (0000-0002-1825-0103)', source: 'scholar', confidence: 'low'},
+     {type: 'result_snippet', value: 'Dravya Demo — Lecturer, affiliation: Demo College, ORCID 0000-0002-1825-0103 https://example.com/profiles/dravya-3', source: 'websearch', confidence: 'low'}
+   ]},
+  {clusterId: 'candidate-4', caseId: 'ENTITY-dravya-demo:candidate-4',
+   affiliation: 'Sample Labs', pin: 'ORCID 0000-0002-1825-0104',
+   findingCount: 2, lanes: ['scholar', 'websearch'],
+   confidence: 'low', reason: 'metadata only — high requires human verification',
+   names: ['Dravya Demo'],
+   findings: [
+     {type: 'scholar_affiliation', value: 'affiliation: Sample Labs (0000-0002-1825-0104)', source: 'scholar', confidence: 'low'},
+     {type: 'result_snippet', value: 'Dravya Demo — Researcher, affiliation: Sample Labs, ORCID 0000-0002-1825-0104 https://example.com/profiles/dravya-4', source: 'websearch', confidence: 'low'}
+   ]},
+  {clusterId: 'candidate-5', caseId: 'ENTITY-dravya-demo:candidate-5',
+   affiliation: 'Fictional School', pin: 'ORCID 0000-0002-1825-0105',
+   findingCount: 2, lanes: ['scholar', 'websearch'],
+   confidence: 'low', reason: 'metadata only — high requires human verification',
+   names: ['Dravya Demo'],
+   findings: [
+     {type: 'scholar_affiliation', value: 'affiliation: Fictional School (0000-0002-1825-0105)', source: 'scholar', confidence: 'low'},
+     {type: 'result_snippet', value: 'Dravya Demo — Scholar, affiliation: Fictional School, ORCID 0000-0002-1825-0105 https://example.com/profiles/dravya-5', source: 'websearch', confidence: 'low'}
+   ]},
+  {clusterId: 'candidate-6', caseId: 'ENTITY-dravya-demo:candidate-6',
+   affiliation: 'Test Department', pin: 'ORCID 0000-0002-1825-0106',
+   findingCount: 2, lanes: ['scholar', 'websearch'],
+   confidence: 'low', reason: 'metadata only — high requires human verification',
+   names: ['Dravya Demo'],
+   findings: [
+     {type: 'scholar_affiliation', value: 'affiliation: Test Department (0000-0002-1825-0106)', source: 'scholar', confidence: 'low'},
+     {type: 'result_snippet', value: 'Dravya Demo — Associate, affiliation: Test Department, ORCID 0000-0002-1825-0106 https://example.com/profiles/dravya-6', source: 'websearch', confidence: 'low'}
+   ]}
+];
+
+function getEntityDepth() {
+  try {
+    var checked = document.querySelector('input[name="entityDepth"]:checked');
+    return checked && checked.value === 'deep' ? 'deep' : 'fast';
+  } catch (e) { return 'fast'; }
+}
+
+function depthNoteText(depth) {
+  if (depth === 'deep') {
+    return 'Depth Deep (static demo — labels only, no backend call): live deep lane sweeps ~400 sites over minutes; fixtures below return instantly with zero network.';
+  }
+  return 'Depth Fast (static demo — labels only, no backend call): live fast lane answers in seconds; fixtures below return instantly with zero network.';
+}
+
+function laneStatusFor(kind) {
+  if (kind === 'demo-case') {
+    return [
+      {lane: 'username_probe', status: 'ok', detail: 'offline fixture — 3 presence, DEMO-CASE-001'},
+      {lane: 'domain_intel', status: 'ok', detail: 'offline fixture — 2 subdomains + 1 contact'},
+      {lane: 'oembed_public', status: 'ok', detail: 'offline fixture — author + caption + 2 transcript links'}
+    ];
+  }
+  if (kind === 'dravya') {
+    return [
+      {lane: 'username_probe', status: 'ok', detail: 'derived-handle probe — empty for non-demo handles (no hallucination)'},
+      {lane: 'websearch', status: 'ok', detail: 'static demo fixture — 6 Dravya-shaped snippets (example.com only)'},
+      {lane: 'scholar', status: 'ok', detail: 'static demo fixture — 6 ORCID pins 0101–0106, kept separate'},
+      {lane: 'page_reader', status: 'ok', detail: 'static demo fixture — excerpt over example.com URLs (no fetch run)'},
+      {lane: 'domain/company', status: 'skipped', detail: 'no affiliation-domain lane in static demo'}
+    ];
+  }
+  return [
+    {lane: 'username_probe', status: 'ok', detail: 'derived-handle probe — empty for non-demo handles (no hallucination)'},
+    {lane: 'websearch', status: 'ok', detail: 'static demo fixture — Kotabagi-shaped snippets (example.com only)'},
+    {lane: 'scholar', status: 'ok', detail: 'static demo fixture — ORCID pins 0097/0098, kept separate'},
+    {lane: 'page_reader', status: 'ok', detail: 'static demo fixture — excerpts over example.com URLs (no fetch run)'},
+    {lane: 'domain/company', status: 'skipped', detail: 'no affiliation-domain lane in static demo'}
+  ];
+}
+
+var URL_IN_TEXT = /https?:\/\/[^\s"'<>]+/;
+
+function firstUrlIn(text) {
+  try {
+    var m = String(text || '').match(URL_IN_TEXT);
+    if (!m) return '';
+    return m[0].replace(/[.,;)\]}]+$/, '');
+  } catch (e) { return ''; }
+}
+
+function laneStatusHtml(rows) {
+  return '<ul class="lane-status" aria-label="Lane status">' + rows.map(function (r) {
+    var cls = r.status === 'ok' ? 'ok' : 'skip-lane';
+    return '<li><span class="' + cls + '">' + esc(r.lane) + ': ' + esc(r.status) + '</span> — ' + esc(r.detail) + '</li>';
+  }).join('') + '</ul>';
+}
+
+function findingRowHtml(f) {
+  var url = firstUrlIn(f.value);
+  var row = '<div class="finding-row"><p class="fval"><code>' + esc(f.type) + '</code> · ' + esc(f.value) +
+    ' <span class="badge conf-' + esc(f.confidence) + '"><i aria-hidden="true"></i>' + esc(f.confidence) + '</span></p>';
+  if (url) {
+    row += '<button type="button" class="fetch-one" data-fetch-url="' + esc(url) + '">Fetch this URL</button>' +
+      '<div class="inline-findings" aria-live="polite"></div>';
+  }
+  return row + '</div>';
+}
+
+function clusterHtml(c) {
+  var html = '<li class="cluster"><h3>' + esc(c.names.join(' / ')) + ' — ' + esc(c.affiliation) +
+    ' <span class="demo-tag">Static demo data</span></h3>' +
+    '<div class="badges"><span class="badge lane-username"><i aria-hidden="true"></i>' + esc(c.clusterId) + '</span>' +
+    '<span class="badge conf-low"><i aria-hidden="true"></i>' + esc(c.confidence) + '</span></div>' +
+    '<dl><dt>Case</dt><dd class="mono">' + esc(c.caseId) + '</dd>' +
+    '<dt>Affiliation</dt><dd>' + esc(c.affiliation) + '</dd>' +
+    '<dt>Pin</dt><dd class="mono">' + esc(c.pin) + '</dd>' +
+    '<dt>Findings</dt><dd>' + c.findingCount + ' (' + esc(c.lanes.join(' · ')) + ')</dd>' +
+    '<dt>Confidence</dt><dd>' + esc(c.confidence) + ' — ' + esc(c.reason) + '</dd></dl>';
+  html += c.findings.map(findingRowHtml).join('');
+  return html + '</li>';
+}
+
+function wireFetchButtons(root) {
+  if (!root || !root.querySelectorAll) return;
+  var btns = root.querySelectorAll('button[data-fetch-url]');
+  Array.prototype.forEach.call(btns, function (btn) {
+    btn.addEventListener('click', function () {
+      var url = btn.getAttribute('data-fetch-url') || '';
+      var slot = btn.nextElementSibling;
+      if (!slot || !slot.classList.contains('inline-findings')) return;
+      if (typeof window.SherlockReader === 'undefined' || !window.SherlockReader.fetchAndExtract) {
+        slot.innerHTML = '<div class="state error" role="alert"><div class="art" aria-hidden="true">!</div><strong>Reader not loaded</strong><p>reader.js did not load (offline fixture mode still works). Findings: 0 (nothing invented).</p></div>';
+        return;
+      }
+      var check = window.SherlockReader.validateUrl(url);
+      if (check.error) {
+        slot.innerHTML = '<div class="state error" role="alert"><div class="art" aria-hidden="true">!</div><strong>Could not fetch</strong><p>' + esc(check.error) + ' Findings: 0 (nothing invented).</p></div>';
+        return;
+      }
+      btn.disabled = true;
+      slot.innerHTML = '<p class="mini-state" role="status">Reading from your browser (your IP)…</p>';
+      window.SherlockReader.fetchAndExtract(check.url).then(function (res) {
+        btn.disabled = false;
+        if (!res || !res.findings || res.findings.length === 0) {
+          var isReject = res && res.status === 'rejected';
+          slot.innerHTML = '<div class="state' + (isReject ? ' error' : '') + '" role="alert"><div class="art" aria-hidden="true">' + (isReject ? '!' : '∅') + '</div><strong>' +
+            (isReject ? 'Could not fetch' : 'No findings') + '</strong><p>' + esc(res ? res.reason : 'empty') + ' Findings: 0 (nothing invented).</p></div>';
+          return;
+        }
+        var items = res.findings.map(function (f) {
+          return '<li><code>' + esc(f.type) + '</code>: ' + esc(f.value) + ' <span class="badge conf-' + esc(f.confidence) + '"><i aria-hidden="true"></i>' + esc(f.confidence) + '</span></li>';
+        }).join('');
+        slot.innerHTML = '<p class="mini-state" role="status">Showing ' + res.findings.length + ' finding(s) from your browser (your IP, not stored).</p><ul>' + items + '</ul>';
+      });
+    });
+  });
+}
+
+function normEntity(s) {
+  var v = String(s || '').trim().toLowerCase();
+  if (!v) return '';
+  try { v = v.normalize('NFKD').replace(/[\u0300-\u036f]/g, ''); } catch (e) {}
+  return v.replace(/\s+/g, ' ').trim();
+}
+
+function entityVariants(q) {
+  var base = normEntity(q);
+  if (!base) return [];
+  var seen = [];
+  var known = {};
+  function add(c) { if (c && !known[c]) { known[c] = 1; seen.push(c); } }
+  add(base);
+  if (base.indexOf('ph') !== -1) add(base.split('ph').join('f'));
+  if (base.indexOf('f') !== -1) add(base.split('f').join('ph'));
+  if (base.indexOf('ee') !== -1) add(base.split('ee').join('i'));
+  if (base.indexOf('i') !== -1) add(base.split('i').join('ee'));
+  var pairs = [['gh', 'g'], ['bh', 'b'], ['dh', 'd']];
+  var pi;
+  for (pi = 0; pi < pairs.length; pi++) {
+    if (base.indexOf(pairs[pi][0]) !== -1) add(base.split(pairs[pi][0]).join(pairs[pi][1]));
+  }
+  for (pi = 0; pi < pairs.length; pi++) {
+    if (base.indexOf(pairs[pi][1]) !== -1 && base.indexOf(pairs[pi][0]) === -1) {
+      add(base.replace(new RegExp(pairs[pi][1] + '(?!h)', 'g'), pairs[pi][0]));
+    }
+  }
+  if (base.indexOf('.') !== -1) add(base.replace(/\./g, '').replace(/\s+/g, ' ').trim());
+  var toks = base.split(' ');
+  if (toks.length === 3 && toks[1].replace('.', '').length === 1) add(toks[0] + ' ' + toks[2]);
+  if (toks.length >= 2) add(toks[toks.length - 1] + ' ' + toks.slice(0, -1).join(' '));
+  var collapsed = base.replace(/([bcdfgjklmnpqrstvwxz])\1/g, '$1');
+  if (collapsed !== base) add(collapsed);
+  var singles = [];
+  var ci, ch;
+  for (ci = 0; ci < base.length && singles.length < 6; ci++) {
+    ch = base[ci];
+    if ('bcdfgjklmnpqrstvwxz'.indexOf(ch) !== -1 && singles.indexOf(ch) === -1) singles.push(ch);
+  }
+  for (ci = 0; ci < singles.length && seen.length < 12; ci++) {
+    ch = singles[ci];
+    var idx = base.indexOf(ch);
+    if (idx >= 0) add(base.slice(0, idx) + ch + base.slice(idx));
+  }
+  return seen.slice(0, 12);
+}
+
+function runEntitySearch() {
+  var raw = entityQ.value || '';
+  var nq = normEntity(raw);
+  var depth = getEntityDepth();
+  var depthNote = document.getElementById('depthNote');
+  if (depthNote) depthNote.textContent = depthNoteText(depth);
+  entityResults.innerHTML = '';
+  entityVariantsBox.innerHTML = '';
+  if (!nq) {
+    entityStatus.textContent = 'Type a query to search offline fixtures.';
+    entityVariantsBox.innerHTML = '';
+    entityResults.innerHTML = '<div class="state"><div class="art" aria-hidden="true">?</div><strong>Empty query</strong><p>Try <code>osint demo case</code>, <code>R Kotabagi</code>, or <code>dravya demo</code>. No network used.</p></div>';
+    return;
+  }
+  var vars = entityVariants(raw);
+  var hay = vars.join(' | ');
+  entityVariantsBox.innerHTML = '<p class="variant-line">Variants tried (' + vars.length + '): ' + esc(vars.join(' · ')) + '</p>' +
+    '<p class="variant-line">entity_search shape: live=false · static demo data, no backend call · depth=' + esc(depth) + ' (labels only: fast seconds, deep minutes)</p>';
+  var isDemo = hay.indexOf('osint demo case') !== -1 || hay.indexOf('demo.sleuth') !== -1 ||
+    hay.indexOf('example.com') !== -1 || hay.indexOf('dmyosint001') !== -1 ||
+    hay.indexOf('demo.archivist') !== -1 || hay.indexOf('open-source research') !== -1;
+  var isDravya = hay.indexOf('dravya') !== -1;
+  var isHom = !isDravya && (hay.indexOf('kotabagi') !== -1 || hay.indexOf('kotabaghi') !== -1 || hay.indexOf('kotab') !== -1);
+  if (isDemo && !isHom && !isDravya) {
+    var entry = DB['DEMO-CASE-001'];
+    entityStatus.textContent = 'DEMO-CASE-001 top-1 for query (documented fixture rank) · 10 findings · offline.';
+    var laneCounts = {username: 0, domain: 0, reel: 0};
+    entry.findings.forEach(function (f) { if (laneCounts[f.lane] !== undefined) laneCounts[f.lane]++; });
+    entityResults.innerHTML =
+      '<p class="variant-line">Query: <code>' + esc(raw.trim()) + '</code> · live=false · homonym_clusters=1 (single demo case)</p>' +
+      laneStatusHtml(laneStatusFor('demo-case')) +
+      '<ul class="cluster-list"><li class="cluster"><h3>DEMO-CASE-001 — top-1 <span class="badge conf-medium"><i aria-hidden="true"></i>fixture rank</span> <span class="demo-tag">Static demo data</span></h3>' +
+      '<dl><dt>Query</dt><dd class="mono">' + esc(raw.trim()) + '</dd>' +
+      '<dt>Findings</dt><dd>10 (username ' + laneCounts.username + ' · domain ' + laneCounts.domain + ' · reel ' + laneCounts.reel + ')</dd>' +
+      '<dt>Lanes</dt><dd class="mono">username_probe · domain_intel · oembed_public</dd>' +
+      '<dt>Confidence</dt><dd>medium max (presence/corpus only — never high without human verification)</dd>' +
+      '<dt>Source</dt><dd class="mono">offline fixtures · zero network</dd></dl></li></ul>';
+    return;
+  }
+  if (isDravya) {
+    entityStatus.textContent = 'Dravya-shaped demo: 6 kept-separate clusters (no shared pin — never merged) · offline static demo.';
+    entityResults.innerHTML =
+      '<p class="variant-line">Query: <code>' + esc(raw.trim()) + '</code> · live=false · homonym_clusters=6 · <span class="demo-tag">Static demo data</span> — fictional Dravya-shaped payload (6 ORCID pins → 6 clusters, PLAN-entity journey §4 shape).</p>' +
+      laneStatusHtml(laneStatusFor('dravya')) +
+      '<ul class="cluster-list">' + DRAVYA_STATIC.map(clusterHtml).join('') + '</ul>';
+    wireFetchButtons(entityResults);
+    return;
+  }
+  if (isHom) {
+    entityStatus.textContent = 'Homonym demo: 2 kept-separate clusters (no shared pin — never merged) · offline static demo.';
+    entityResults.innerHTML =
+      '<p class="variant-line">Query: <code>' + esc(raw.trim()) + '</code> · live=false · homonym_clusters=2 · <span class="demo-tag">Static demo data</span> — fictional Kotabagi-shaped payload (golden_case.json shape).</p>' +
+      laneStatusHtml(laneStatusFor('kotabagi')) +
+      '<ul class="cluster-list">' + KOTABAGI_STATIC.map(clusterHtml).join('') + '</ul>';
+    wireFetchButtons(entityResults);
+    return;
+  }
+  entityStatus.textContent = 'No fixture match — 0 findings (nothing invented).';
+  entityResults.innerHTML = '<div class="state"><div class="art" aria-hidden="true">∅</div><strong>No matches</strong><p>No offline fixture matches “' + esc(raw.trim()) + '”. Try <code>osint demo case</code>, <code>R Kotabagi</code>, or <code>dravya demo</code>. Live lanes need the local connector.</p></div>';
+}
+if (entityGo) entityGo.addEventListener('click', runEntitySearch);
+if (entityQ) entityQ.addEventListener('keydown', function (e) { if (e.key === 'Enter') runEntitySearch(); });
+Array.prototype.forEach.call(document.querySelectorAll('input[name="entityDepth"]'), function (r) {
+  r.addEventListener('change', function () {
+    var note = document.getElementById('depthNote');
+    if (note) note.textContent = depthNoteText(getEntityDepth());
+  });
+});
+
+/* ---- Phase 4 doors: page reader (visitor-browser fetch, user-initiated only) ---- */
+var readerUrl = document.getElementById('readerUrl');
+var readerGo = document.getElementById('readerGo');
+var readerStatus = document.getElementById('readerStatus');
+var readerResults = document.getElementById('readerResults');
+var readerState = document.getElementById('readerState');
+
+function readerCard(f, pageUrl, i) {
+  var b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'card';
+  b.style.setProperty('--i', String(i));
+  b.setAttribute('aria-label', f.type + ', ' + f.value + ', page_reader, ' + f.confidence + ' confidence. Activate for detail.');
+  var meta = (LANE_META && LANE_META.page_reader) || {label: 'Page reader', short: 'READ'};
+  b.innerHTML = '<span class="thumb thumb-page_reader" aria-hidden="true">'
+    + '<span class="glyph">' + esc(meta.short) + ' · ' + esc(meta.label) + '</span>'
+    + '<span class="conf-dot ' + esc(f.confidence) + '"></span></span>'
+    + '<span class="card-body"><span class="eyebrow">page_reader · ' + esc(f.type) + '</span>'
+    + '<span class="card-title">' + esc(f.type) + ': ' + esc(f.value) + '</span>'
+    + '<span class="badges"><span class="badge lane-reel"><i aria-hidden="true"></i>page_reader</span>'
+    + '<span class="badge conf-' + esc(f.confidence) + '"><i aria-hidden="true"></i>' + esc(f.confidence) + '</span></span>'
+    + '<span class="src">source: page_reader</span>'
+    + '<span class="open-hint">Open detail →</span></span>';
+  b.addEventListener('click', function () { openReaderDetail({type: f.type, value: f.value, lane: 'page_reader', source: 'page_reader', confidence: f.confidence}, b, pageUrl); });
+  return b;
+}
+
+function runReaderFetch() {
+  var rawUrl = readerUrl ? readerUrl.value.trim() : '';
+  if (readerResults) readerResults.innerHTML = '';
+  if (readerState) readerState.innerHTML = '';
+  if (!rawUrl) {
+    if (readerStatus) readerStatus.textContent = 'Paste a public http(s) URL first.';
+    if (readerState) readerState.innerHTML = '<div class="state" role="alert"><div class="art" aria-hidden="true">?</div><strong>Empty URL</strong><p>Paste a public page URL, then press Fetch. No fetch has run.</p></div>';
+    return;
+  }
+  if (typeof window.SherlockReader === 'undefined' || !window.SherlockReader.fetchAndExtract) {
+    if (readerStatus) readerStatus.textContent = 'Reader unavailable.';
+    if (readerState) readerState.innerHTML = '<div class="state error" role="alert"><div class="art" aria-hidden="true">!</div><strong>Reader not loaded</strong><p>reader.js did not load (offline fixture mode still works). Findings: 0 (nothing invented).</p></div>';
+    return;
+  }
+  var check = window.SherlockReader.validateUrl(rawUrl);
+  if (check.error) {
+    if (readerStatus) readerStatus.textContent = 'Invalid URL.';
+    if (readerState) readerState.innerHTML = '<div class="state error" role="alert"><div class="art" aria-hidden="true">!</div><strong>Could not fetch</strong><p>' + esc(check.error) + ' Findings: 0 (nothing invented).</p></div>';
+    return;
+  }
+  if (readerStatus) readerStatus.textContent = 'Fetching from your browser (your IP)…';
+  if (readerGo) readerGo.disabled = true;
+  window.SherlockReader.fetchAndExtract(check.url).then(function (res) {
+    if (readerGo) readerGo.disabled = false;
+    if (!res || !res.findings || res.findings.length === 0) {
+      var isReject = res && res.status === 'rejected';
+      if (readerStatus) readerStatus.textContent = isReject ? 'Fetch refused.' : 'No readable text — 0 findings.';
+      if (readerState) readerState.innerHTML = '<div class="state' + (isReject ? ' error' : '') + '" role="alert"><div class="art" aria-hidden="true">' + (isReject ? '!' : '∅') + '</div><strong>' +
+        (isReject ? 'Could not fetch' : 'No findings') + '</strong><p>' + esc(res ? res.reason : 'empty') + ' Findings: 0 (nothing invented).</p></div>';
+      return;
+    }
+    if (readerStatus) readerStatus.textContent = 'Showing ' + res.findings.length + ' finding(s) from ' + check.url + ' (visitor-browser fetch, your IP).';
+    res.findings.forEach(function (f, i) { readerResults.appendChild(readerCard(f, check.url, i)); });
+  });
+}
+if (readerGo) readerGo.addEventListener('click', runReaderFetch);
+if (readerUrl) readerUrl.addEventListener('keydown', function (e) { if (e.key === 'Enter') runReaderFetch(); });
+</script>
+</body>
+</html>

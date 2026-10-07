@@ -1,0 +1,136 @@
+{
+  "app": "osint-triage",
+  "version": "0.1.0",
+  "sdk": "apps-sdk-compat",
+  "description": "Case-file panel for the Sherlock OSINT triage skill. Public sources only; login-gated and PII requests are refused.",
+  "views": [
+    {
+      "id": "grid",
+      "title": "Case findings grid",
+      "type": "card-grid",
+      "pattern": "MyMind/Raindrop-inspired card grid (studied docs only, no code copied): lane filter, search box, uniform cards, click opens detail.",
+      "props": {
+        "caseSelector": {
+          "type": "select",
+          "label": "Case",
+          "options": ["DEMO-CASE-001"],
+          "default": "DEMO-CASE-001"
+        },
+        "laneFilter": {
+          "type": "segmented",
+          "label": "Lane",
+          "options": ["all", "username", "domain", "reel"],
+          "default": "all"
+        },
+        "searchBox": {
+          "type": "search",
+          "label": "Search findings in case",
+          "placeholder": "e.g. demo.sleuth, example.com, DMYosint001",
+          "debounceMs": 150
+        },
+        "card": {
+          "title": "{{finding.type}}: {{finding.value}}",
+          "badges": ["{{finding.lane}}", "{{finding.confidence}}"],
+          "subtitle": "source: {{finding.source}}",
+          "actions": ["open-detail"]
+        },
+        "sort": {
+          "by": ["confidence", "lane", "value"],
+          "default": "confidence-desc",
+          "note": "Fixed demo ordering: DEMO-CASE-001 ranks top-1 for query 'osint demo case'; within the case, high confidence first. Documented, not personalized."
+        },
+        "states": {
+          "empty": "No findings match. Show empty state, never fake cards.",
+          "error": "Show error state with reason; findings stay [].",
+          "loading": "Skeleton cards, reduced-motion safe."
+        }
+      }
+    },
+    {
+      "id": "case-detail",
+      "title": "Finding detail",
+      "type": "modal",
+      "trigger": "open-detail from grid card (click or Enter)",
+      "props": {
+        "fields": ["type", "value", "lane", "source", "confidence", "caseId", "caption?", "transcriptLinks?"],
+        "closeBehaviors": ["close-button", "Escape", "backdrop-click"],
+        "focus": "trap inside modal, restore focus to invoking card on close",
+        "a11y": ["role=dialog", "aria-modal=true", "aria-labelledby", "labelled close button"]
+      }
+    }
+  ],
+  "tools": [
+    {"name": "triage_target", "args": ["target", "kind"]},
+    {"name": "probe_username", "args": ["handle"]},
+    {"name": "intel_domain", "args": ["domain"]},
+    {"name": "save_reel", "args": ["url"]},
+    {"name": "search_memory", "args": ["query", "limit", "offset"]},
+    {"name": "case_summary", "args": ["case_id", "limit", "offset"]}
+  ],
+  "exampleResult": {
+    "query": "osint demo case",
+    "top1": "DEMO-CASE-001",
+    "orderingNote": "Fixture rank: exact fixture-query match outranks all others. Only DEMO-CASE-001 matches 'osint demo case'; ordering is documented here and mirrored by the offline dashboard's embedded fixture ranking.",
+    "case": {
+      "caseId": "DEMO-CASE-001",
+      "lanes": {
+        "username": {
+          "handle": "@demo.sleuth",
+          "tool": "probe_username",
+          "source": "username_probe",
+          "note": "Multi-site corroboration upgrades the base low confidence to medium; a lone single-site hit would stay low.",
+          "findings": [
+            {"type": "presence", "value": "DemoHub: https://example.com/users/demo.sleuth", "source": "username_probe", "confidence": "medium"},
+            {"type": "presence", "value": "DemoCode: https://example.com/@demo.sleuth", "source": "username_probe", "confidence": "medium"},
+            {"type": "presence", "value": "DemoBlog: https://example.com/blog/demo.sleuth", "source": "username_probe", "confidence": "medium"}
+          ]
+        },
+        "domain": {
+          "domain": "example.com",
+          "tool": "intel_domain",
+          "source": "domain_intel",
+          "findings": [
+            {"type": "subdomain", "value": "blog.example.com", "source": "domain_intel", "confidence": "medium"},
+            {"type": "subdomain", "value": "www.example.com", "source": "domain_intel", "confidence": "medium"},
+            {"type": "contact", "value": "admin@example.com", "source": "domain_intel", "confidence": "low"}
+          ]
+        },
+        "reel": {
+          "url": "https://www.instagram.com/reel/DMYosint001/",
+          "owner": "@demo.archivist",
+          "tool": "save_reel",
+          "source": "oembed_public",
+          "caption": "open-source research notes: tracing public handles across demo sites for DEMO-CASE-001. Methods only, no private data.",
+          "transcriptStub": {
+            "lines": 2,
+            "links": ["https://example.com/resource-1", "https://example.com/resource-2"],
+            "note": "Stub data, honestly marked low confidence."
+          },
+          "findings": [
+            {"type": "author", "value": "@demo.archivist", "source": "oembed_public", "confidence": "medium"},
+            {"type": "caption", "value": "open-source research notes: tracing public handles across demo sites for DEMO-CASE-001. Methods only, no private data.", "source": "oembed_public", "confidence": "medium"},
+            {"type": "transcript_link", "value": "https://example.com/resource-1", "source": "oembed_public", "confidence": "low"},
+            {"type": "transcript_link", "value": "https://example.com/resource-2", "source": "oembed_public", "confidence": "low"}
+          ]
+        }
+      }
+    }
+  },
+  "markdownFallback": {
+    "spec": "When the interactive panel cannot render, the model MUST emit this markdown instead. Same data, no hallucination.",
+    "template": "## DEMO-CASE-001 — case summary\n\nQuery `osint demo case` → top-1: **DEMO-CASE-001** (fixture rank, documented).\n\n### username — @demo.sleuth (source: username_probe)\n- [medium] presence: DemoHub: https://example.com/users/demo.sleuth\n- [medium] presence: DemoCode: https://example.com/@demo.sleuth\n- [medium] presence: DemoBlog: https://example.com/blog/demo.sleuth\n\n### domain — example.com (source: domain_intel)\n- [medium] subdomain: blog.example.com\n- [medium] subdomain: www.example.com\n- [low] contact: admin@example.com\n\n### reel — https://www.instagram.com/reel/DMYosint001/ by @demo.archivist (source: oembed_public)\n- [medium] author: @demo.archivist\n- [medium] caption: open-source research notes: tracing public handles across demo sites for DEMO-CASE-001. Methods only, no private data.\n- [low] transcript_link: https://example.com/resource-1\n- [low] transcript_link: https://example.com/resource-2\n\nRefusals: login/Saved/PII requests → `status: rejected`, zero findings."
+  },
+  "refusals": {
+    "shape": {"status": "rejected", "reason": "<rule cited>", "findings": []},
+    "rules": [
+      "No login/session/cookie/password flows.",
+      "No PII (email/phone-to-account) lookups.",
+      "IG Saved/Liked has no endpoint; offer paste-link or Export-ZIP backfill.",
+      "Private/deleted/rate-limit → clean FAIL, no hallucinated findings."
+    ]
+  },
+  "todos": [
+    "TODO(rename): rename before public launch (sherlock-project owns 'sherlock'; candidates: OpenLens, Lantern, TraceKit).",
+    "TODO(live-data): wire live adapters with free-tier caps + failure taxonomy; fixtures only in v1."
+  ]
+}

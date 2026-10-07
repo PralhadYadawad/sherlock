@@ -1,0 +1,17 @@
+# Sherlock runtime + test dependencies (lower bounds; frozen versions in SECURITY.md).
+# Every entry must stay importable in the project venv — see
+# server/test_core.py::test_requirements_importable (regression for the
+# missing-requests incident: an entry here but absent from the venv broke
+# 11 integration tests silently). Dockerfile installs this file, so any
+# omission breaks prod images too.
+fastapi>=0.110       # MCP server (server/main.py; pulls in pydantic/starlette)
+uvicorn>=0.29        # ASGI server (Dockerfile CMD; local `uvicorn server.main:app`)
+pydantic>=2.0        # fastapi dependency; direct import guard for future schemas
+httpx>=0.27          # FastAPI TestClient transport (server/test_core.py HTTP-guard tests)
+requests>=2.31       # adapter HTTP transport (all 3 network adapters import it)
+pytest>=8            # test runner (AGENTS.md §7 flow installs this file, then runs pytest)
+readability-lxml==0.9  # page-reader fallback extractor (server/adapters/page_reader.py; Apache-2.0; optional at runtime, stdlib fallback)
+trafilatura==2.3.0      # page-reader primary extractor (server/adapters/page_reader.py; Apache-2.0; optional at runtime, stdlib fallback)
+scrapling==0.4.15       # page-reader primary parser (server/adapters/page_reader.py; BSD-3-Clause; plain parser + spiders with robots_txt_obey only, stealth/turnstile/proxy EXCLUDED; optional at runtime, trafilatura/readability/stdlib fallback)
+sherlock-project==0.16.2  # deep-probe engine (server/adapters/deep_probe.py; MIT; pip dependency, not vendored; attribution in docs/THIRD_PARTY.md)
+psycopg==3.3.6  # postgres driver for db.py Supabase mode (server/db.py; optional at runtime, sqlite fallback)

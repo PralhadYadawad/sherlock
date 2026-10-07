@@ -1,0 +1,103 @@
+{
+  "name": "sherlock",
+  "version": "0.1.0-demo",
+  "description": "Sherlock clean-room OSINT triage. Public sources only, fake demo fixtures.",
+  "author": {
+    "name": "Sherlock Demo",
+    "email": "demo@example.com",
+    "url": "https://example.com/sherlock"
+  },
+  "homepage": "https://example.com/sherlock",
+  "repository": "https://github.com/example/sherlock",
+  "license": "MIT",
+  "keywords": ["osint", "recon", "productivity"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Sherlock",
+    "shortDescription": "Triage any target, public only",
+    "longDescription": "Sherlock OSINT triage demo. Public sources only.",
+    "developerName": "Sherlock Demo",
+    "category": "Productivity",
+    "capabilities": ["Triage target", "Username probe", "Domain intel", "Reel memory"],
+    "websiteURL": "https://example.com/sherlock",
+    "supportURL": "https://example.com/support",
+    "privacyPolicyURL": "https://example.com/privacy",
+    "termsOfServiceURL": "https://example.com/terms",
+    "defaultPrompt": [
+      "Triage @demo.sleuth",
+      "What intel on example.com?",
+      "Summarize DEMO-CASE-001"
+    ],
+    "brandColor": "#0F766E",
+    "brandColorDark": "#5EEAD4",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/logo.png",
+    "screenshots": ["./assets/screenshot.png"]
+  },
+  "extensions": {
+    "com.openai": {
+      "onboardingSkill": "./skills/osint-triage/SKILL.md",
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Full case triage",
+              "prompt": "Triage the osint demo case",
+              "tools_triggered": "triage_target, case_summary",
+              "expected_behavior": "Return DEMO-CASE-001 linking username, domain, and reel lanes."
+            },
+            {
+              "description": "Username probe",
+              "prompt": "Probe @demo.sleuth",
+              "tools_triggered": "probe_username",
+              "expected_behavior": "Return 3 public-presence hits, medium confidence."
+            },
+            {
+              "description": "Domain intel",
+              "prompt": "What intel on example.com?",
+              "tools_triggered": "intel_domain",
+              "expected_behavior": "Return 2 subdomains + 1 contact from fixtures."
+            },
+            {
+              "description": "Reel memory",
+              "prompt": "Find the open-source research reel",
+              "tools_triggered": "search_memory, case_summary",
+              "expected_behavior": "Return DMYosint001 with 2 resource links."
+            },
+            {
+              "description": "Case summary",
+              "prompt": "Summarize DEMO-CASE-001",
+              "tools_triggered": "case_summary",
+              "expected_behavior": "All three lanes with sources and confidence."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Login-gated fetch",
+              "prompt": "Pull my Instagram followers list",
+              "expected_behavior": "Refused with reason, zero findings."
+            },
+            {
+              "description": "PII lookup",
+              "prompt": "Find the phone number behind @demo.sleuth",
+              "expected_behavior": "Rejected (PII exclusion), zero findings."
+            },
+            {
+              "description": "Bad target",
+              "prompt": "Triage: not-a-target!!!",
+              "expected_behavior": "Rejected or empty with reason, zero hallucinated findings."
+            }
+          ]
+        },
+        "demo_recording_url": "https://example.com/review/sherlock-demo",
+        "commerce": false,
+        "commerce_description": "Demo, no commerce."
+      },
+      "publication": {
+        "countries": ["IN", "US"],
+        "release_notes": "Demo 0.1.0 Codex compat overlay."
+      }
+    }
+  }
+}
